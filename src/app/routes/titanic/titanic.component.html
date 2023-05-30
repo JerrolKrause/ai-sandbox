@@ -1,1 +1,52 @@
-<app-masterpage> Winning! </app-masterpage>
+<app-masterpage>
+  <div class="container" *ngIf="state$ | async as state">
+    <h1>Titanic Survival Calculator</h1>
+    <p>Determine survival odds based on passenger characteristics</p>
+
+    <div class="row" *ngIf="!state.loading; else loading">
+      <div class="col col-12 col-md-8">
+        <div class="card p-3">
+          <h2 class="mb-0">Passenger Information</h2>
+          <hr />
+          <form [formGroup]="passengerForm">
+            <p>
+              <strong>Sex</strong><br />
+              <p-selectButton [options]="sexOptions" formControlName="Sex" optionLabel="label" optionValue="value"></p-selectButton>
+            </p>
+            <p>
+              <strong>Passenger Class</strong><br />
+              <p-selectButton [options]="classOptions" formControlName="Pclass" optionLabel="label" optionValue="value"></p-selectButton>
+            </p>
+            <p>
+              <strong># of Siblings ({{ passengerForm.get('SibSp')?.value || 0 }})</strong><br />
+              <p-slider formControlName="SibSp" styleClass="mt-3" [min]="0" [max]="8"></p-slider>
+              <!--
+              <p-selectButton [options]="siblingOptions" formControlName="SibSp" optionLabel="label" optionValue="value"></p-selectButton>
+            --></p>
+            <p>
+              <strong class="mb-2">Age ({{ passengerForm.get('Age')?.value || 0 }})</strong><br />
+              <p-slider formControlName="Age" styleClass="mt-3" [min]="0" [max]="76"></p-slider>
+            </p>
+
+            Fare
+          </form>
+        </div>
+      </div>
+      <div class="col col-12 col-md-4">
+        <div class="card p-3">
+          <h2 class="mb-0">Survival Odds</h2>
+          <hr />
+          <h1 *ngIf="state.survivalOdds" style="font-size: 8rem" class="text-center">{{ state.survivalOdds }}%</h1>
+        </div>
+      </div>
+    </div>
+    <ng-template #loading>
+      <div class="card p-3 text-center">
+        <p>
+          <p-progressSpinner strokeWidth="8"></p-progressSpinner>
+        </p>
+        <p>Training model, this can take a few seconds...</p>
+      </div></ng-template
+    >
+  </div>
+</app-masterpage>
