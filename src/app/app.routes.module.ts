@@ -5,8 +5,8 @@ import { NoPreloading, PreloadAllModules, RouterModule, Routes } from '@angular/
 
 export const ROUTES: Routes = [
   {
-    path: 'rock-paper-scissors',
-    loadChildren: () => import('./routes/rock-paper-scissors/rock-paper-scissors.module').then(m => m.RockPaperScissorsModule),
+    path: 'titanic',
+    loadChildren: () => import('./routes/titanic/titanic.module').then(m => m.TitanicModule),
     // canActivate: [AuthGuard],
   },
   // Routes without masterpage or that do not need to be authenticated need to go first
