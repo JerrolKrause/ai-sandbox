@@ -4,6 +4,11 @@ import { NgModule } from '@angular/core';
 import { NoPreloading, PreloadAllModules, RouterModule, Routes } from '@angular/router';
 
 export const ROUTES: Routes = [
+  {
+    path: 'rock-paper-scissors',
+    loadChildren: () => import('./routes/rock-paper-scissors/rock-paper-scissors.module').then(m => m.RockPaperScissorsModule),
+    // canActivate: [AuthGuard],
+  },
   // Routes without masterpage or that do not need to be authenticated need to go first
   {
     path: 'users',

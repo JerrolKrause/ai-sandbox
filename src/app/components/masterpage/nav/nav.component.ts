@@ -31,6 +31,12 @@ export class NavComponent implements OnInit, OnDestroy {
       routerLinkActiveOptions: { exact: true },
     },
     {
+      label: 'Rock Paper Scissors',
+      icon: 'cogs',
+      routerLink: '/rock-paper-scissors',
+      routerLinkActiveOptions: { exact: true },
+    },
+    {
       label: 'Users Demo',
       icon: 'users',
       routerLink: '/users',
