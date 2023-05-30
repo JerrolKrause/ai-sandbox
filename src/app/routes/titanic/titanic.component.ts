@@ -72,10 +72,9 @@ export class TitanicComponent implements OnInit, OnDestroy {
       .pipe(
         filter(x => !!x),
         map(passengers => this.normalizePassengers(passengers)),
-        mergeMap(dataset => this.svc.trainNeuralNet$(dataset)),
+        mergeMap(dataset => this.svc.trainNeuralNet$(dataset, 'titanic')),
       )
       .subscribe(message => {
-        console.log(message.data);
         this.net.fromJSON(message.data);
         this.stateChange({ loading: false, timeToTrain: message.timeStamp });
       });
@@ -89,6 +88,10 @@ export class TitanicComponent implements OnInit, OnDestroy {
     this.state$.pipe(take(1)).subscribe(stateOld => this.state$.next({ ...stateOld, ...state }));
   }
 
+  /**
+   * When the form changes, display the results in the browser
+   * @param passenger
+   */
   private formChange(passenger: Nillable<PassengerNormalized>) {
     const result = this.net.run(passenger);
     this.stateChange({ survivalOdds: Math.floor(result.Survived * 100) });
