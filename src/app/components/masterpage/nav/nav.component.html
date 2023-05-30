@@ -1,0 +1,64 @@
+<div id="nav">
+  <div class="d-none d-lg-flex">
+    <a
+      class="nav-menu-link main-menu"
+      *ngFor="let nav of navMenu"
+      [routerLink]="nav.routerLink ? [nav.routerLink] : null"
+      (click)="nav.command ? nav.command() : null"
+    >
+      <app-icons [icon]="nav?.icon || 'question'" *ngIf="!!nav.icon" class="me-2"></app-icons> <span [innerHtml]="nav.label"></span>
+    </a>
+    <div class="menu-container align-self-center ms-auto" #temp>
+      <a label="Show" class="menu-bar-toggle">
+        <app-icons icon="user" class="me-2"></app-icons> <span class="me-2" *ngIf="user$ | async as user">{{ user.name }}</span>
+        <app-icons icon="caret-down" class="icon-caret-down"></app-icons>
+      </a>
+      <div class="menu-bar">
+        <div class="menu-bar-container">
+          <a
+            class="nav-menu-link main-menu d-block thin"
+            *ngFor="let nav of utilityMenu"
+            [routerLink]="nav.routerLink ? [nav.routerLink] : null"
+            (click)="nav.command ? nav.command() : null"
+          >
+            <app-icons [icon]="nav?.icon || 'question'" *ngIf="!!nav.icon" class="me-2"></app-icons>
+            <span [innerHtml]="nav.label"></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toggle sidebar -->
+  <div class="pt-2 float-end d-block d-lg-none">
+    <a (click)="sidebarVisible.set(true)" class="p-2">
+      <app-icons icon="bars" class="me-2 fa-lg"></app-icons>
+    </a>
+  </div>
+
+  <!--
+  Flyout sidebar
+  -->
+  <p-sidebar
+    [visible]="sidebarVisible()"
+    (onHide)="sidebarVisible.set(false)"
+    [style]="{ 'z-index': 10000 }"
+    appendTo="body"
+    [baseZIndex]="10000"
+    [dismissible]="true"
+    [showCloseIcon]="false"
+  >
+    <a (click)="sidebarVisible.set(false)" class="sidebar-close float-end">
+      <app-icons icon="x"></app-icons>
+    </a>
+
+    <a class="nav-menu-link main-menu d-block" *ngFor="let nav of navMenu" [routerLink]="[nav.routerLink]">
+      <app-icons [icon]="nav?.icon || 'question'" *ngIf="!!nav.icon" class="me-2"></app-icons> <span [innerHtml]="nav.label"></span>
+    </a>
+    <hr />
+    <a class="nav-menu-link main-menu d-block" *ngFor="let nav of utilityMenu" [routerLink]="[nav.routerLink]">
+      <app-icons [icon]="nav?.icon || 'question'" *ngIf="!!nav.icon" class="me-2"></app-icons>
+      <span [innerHtml]="nav.label"></span>
+    </a>
+  </p-sidebar>
+</div>
