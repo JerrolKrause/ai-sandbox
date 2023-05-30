@@ -1,9 +1,10 @@
-import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
-import { BehaviorSubject, debounceTime, take } from 'rxjs';
+import { BehaviorSubject, debounceTime, filter, map, mergeMap, take } from 'rxjs';
 import { Memoize } from '../../shared';
+import { Passenger, PassengerNormalized } from './shared/models';
+import { TitanicService } from './shared/services/titanic.service';
 
 declare var brain: any;
 
@@ -14,32 +15,7 @@ type Nillable<T> = {
 interface State {
   loading: boolean;
   survivalOdds: number | null;
-}
-
-interface Passenger {
-  PassengerId: number;
-  Survived: number;
-  Pclass: number;
-  Name: string;
-  Sex: string;
-  Age: number;
-  SibSp: number;
-  Parch: number;
-  Ticket: number;
-  Fare: number;
-  Cabin: string;
-  Embarked: string;
-}
-
-interface PassengerNormalized {
-  PassengerId: number;
-  Survived?: number;
-  Pclass: number;
-  Sex: number;
-  Age: number;
-  SibSp: number;
-  Parch: number;
-  Fare: number;
+  timeToTrain: number | null;
 }
 
 @Component({
@@ -49,7 +25,7 @@ interface PassengerNormalized {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TitanicComponent implements OnInit, OnDestroy {
-  public state$ = new BehaviorSubject<State>({ loading: true, survivalOdds: null });
+  public state$ = new BehaviorSubject<State>({ loading: true, survivalOdds: null, timeToTrain: null });
 
   public passengerForm = this.fb.group<PassengerNormalized>({
     PassengerId: 0,
@@ -86,25 +62,23 @@ export class TitanicComponent implements OnInit, OnDestroy {
 
   private net = new brain.NeuralNetworkGPU();
 
-  constructor(private http: HttpClient, private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private svc: TitanicService) {
     this.passengerForm.reset();
     this.passengerForm.valueChanges.pipe(takeUntilDestroyed(), debounceTime(250)).subscribe(passenger => this.formChange(passenger));
   }
 
   ngOnInit() {
-    this.http.get<Passenger[]>('assets/datasets/titanic.json').subscribe(dataset => {
-      // dataset.length = 5;
-      // console.log('1-0', this.normalizePassengers(dataset));
-      // const passengers = dataset.map(this.normalizePassenger);
-      const passengers = this.normalizePassengers(dataset);
-
-      console.time('Training NN took');
-      // Create a new neural network instance
-      // const net = new brain.NeuralNetworkGPU();
-      this.net.train(passengers);
-      console.timeEnd('Training NN took');
-      this.stateChange({ loading: false });
-    });
+    this.svc.passengers.selectAll$
+      .pipe(
+        filter(x => !!x),
+        map(passengers => this.normalizePassengers(passengers)),
+        mergeMap(dataset => this.svc.trainNeuralNet$(dataset)),
+      )
+      .subscribe(message => {
+        console.log(message.data);
+        this.net.fromJSON(message.data);
+        this.stateChange({ loading: false, timeToTrain: message.timeStamp });
+      });
   }
 
   /**
@@ -186,7 +160,10 @@ export class TitanicComponent implements OnInit, OnDestroy {
     return;
   }
 
-  normalizePassengers(passengers: Passenger[]) {
+  normalizePassengers(passengers: Passenger[] | null) {
+    if (!passengers) {
+      return [];
+    }
     const ranges = this.determineValidRanges(passengers);
     // Then, we normalize each passenger
     return passengers.map(passenger => {
