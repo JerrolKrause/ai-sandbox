@@ -1,7 +1,11 @@
 <app-masterpage>
   <div class="container" *ngIf="state$ | async as state">
-    <h1>Titanic Survival Calculator</h1>
-    <p>Determine survival odds based on passenger characteristics</p>
+    <a class="float-end" (click)="resetModel()" *ngIf="!state.loading">Reset trained model</a>
+    <h1>Titanic Survival Predictor</h1>
+    <p>
+      Dive into the historic voyage of the Titanic with our Titanic Survival Predictor application. This tool uses machine learning algorithms trained on
+      passenger data from the ill-fated voyage to estimate survival odds based on selected passenger characteristics.
+    </p>
 
     <div class="row" *ngIf="!state.loading; else loading">
       <div class="col col-12 col-md-8">
@@ -45,7 +49,7 @@
         <p>
           <p-progressSpinner strokeWidth="8"></p-progressSpinner>
         </p>
-        <p>Training model, this can take a few seconds...</p>
+        <p>Training model, this can take up to a minute...</p>
       </div></ng-template
     >
   </div>

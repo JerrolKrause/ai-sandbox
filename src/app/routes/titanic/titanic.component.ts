@@ -61,23 +61,35 @@ export class TitanicComponent implements OnInit, OnDestroy {
   ];
 
   private net = new brain.NeuralNetworkGPU();
+  private localStorageKey = 'titanic';
 
   constructor(private fb: FormBuilder, private svc: TitanicService) {
     this.passengerForm.reset();
     this.passengerForm.valueChanges.pipe(takeUntilDestroyed(), debounceTime(250)).subscribe(passenger => this.formChange(passenger));
-  }
-
-  ngOnInit() {
-    this.svc.passengers.selectAll$
+    // Retrain neural net when passenger data changes
+    this.svc.passengersStore$
       .pipe(
+        takeUntilDestroyed(),
         filter(x => !!x),
         map(passengers => this.normalizePassengers(passengers)),
-        mergeMap(dataset => this.svc.trainNeuralNet$(dataset, 'titanic')),
+        mergeMap(dataset => this.svc.trainNeuralNet$(dataset, this.localStorageKey)),
       )
       .subscribe(message => {
+        this.net = new brain.NeuralNetworkGPU();
         this.net.fromJSON(message.data);
         this.stateChange({ loading: false, timeToTrain: message.timeStamp });
       });
+  }
+
+  ngOnInit() {}
+
+  /**
+   * Remove any stored/trained model and reset state
+   */
+  public resetModel() {
+    localStorage.removeItem(this.localStorageKey);
+    this.stateChange({ loading: true, timeToTrain: null });
+    this.svc.loadData();
   }
 
   /**
