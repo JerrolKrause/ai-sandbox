@@ -1,0 +1,182 @@
+[
+  {
+    "input": {
+      "Pclass": 1,
+      "Sex": 1,
+      "Age": 0.3,
+      "SibSp": 0.1,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 0
+    }
+  },
+  {
+    "input": {
+      "Pclass": 0,
+      "Sex": 0,
+      "Age": 0.5,
+      "SibSp": 0.1,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 1
+    }
+  },
+  {
+    "input": {
+      "Pclass": 1,
+      "Sex": 0,
+      "Age": 0.3,
+      "SibSp": 0,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 1
+    }
+  },
+  {
+    "input": {
+      "Pclass": 0,
+      "Sex": 0,
+      "Age": 0.4,
+      "SibSp": 0.1,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 1
+    }
+  },
+  {
+    "input": {
+      "Pclass": 1,
+      "Sex": 1,
+      "Age": 0.4,
+      "SibSp": 0,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 0
+    }
+  },
+  {
+    "input": {
+      "Pclass": 1,
+      "Sex": 1,
+      "Age": 0,
+      "SibSp": 0,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 0
+    }
+  },
+  {
+    "input": {
+      "Pclass": 0,
+      "Sex": 1,
+      "Age": 0.7,
+      "SibSp": 0,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 0
+    }
+  },
+  {
+    "input": {
+      "Pclass": 1,
+      "Sex": 1,
+      "Age": 0,
+      "SibSp": 0.4,
+      "Parch": 0.2
+    },
+    "output": {
+      "Survived": 0
+    }
+  },
+  {
+    "input": {
+      "Pclass": 1,
+      "Sex": 0,
+      "Age": 0.3,
+      "SibSp": 0,
+      "Parch": 0.3
+    },
+    "output": {
+      "Survived": 1
+    }
+  },
+  {
+    "input": {
+      "Pclass": 0.5,
+      "Sex": 0,
+      "Age": 0.2,
+      "SibSp": 0.1,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 1
+    }
+  },
+  {
+    "input": {
+      "Pclass": 1,
+      "Sex": 0,
+      "Age": 0.1,
+      "SibSp": 0.1,
+      "Parch": 0.2
+    },
+    "output": {
+      "Survived": 1
+    }
+  },
+  {
+    "input": {
+      "Pclass": 0,
+      "Sex": 0,
+      "Age": 0.7,
+      "SibSp": 0,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 1
+    }
+  },
+  {
+    "input": {
+      "Pclass": 1,
+      "Sex": 1,
+      "Age": 0.3,
+      "SibSp": 0,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 0
+    }
+  },
+  {
+    "input": {
+      "Pclass": 1,
+      "Sex": 1,
+      "Age": 0.5,
+      "SibSp": 0.1,
+      "Parch": 0.8
+    },
+    "output": {
+      "Survived": 0
+    }
+  },
+  {
+    "input": {
+      "Pclass": 1,
+      "Sex": 0,
+      "Age": 0.2,
+      "SibSp": 0,
+      "Parch": 0
+    },
+    "output": {
+      "Survived": 0
+    }
+  }
+]

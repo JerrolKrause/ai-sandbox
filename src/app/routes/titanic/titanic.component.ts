@@ -96,15 +96,14 @@ export class TitanicComponent implements OnInit, OnDestroy {
         mergeMap(dataset => this.svc.trainNeuralNet$(dataset, this.localStorageKey)),
       )
       .subscribe(message => {
-        console.log(message);
         /** */
         // console.log('Training took: ', Math.floor(message.timeStamp / 1000), 'seconds', message);
-        console.time('Loading model took: ');
+        // console.time('Loading model took: ');
         this.net = new brain.NeuralNetworkGPU();
         this.net.fromJSON(message.data);
         console.log('Model: ', message.data);
         this.stateChange({ loading: false, timeToTrain: message.timeStamp });
-        console.timeEnd('Loading model took: ');
+        // console.timeEnd('Loading model took: ');
         /**
           console.time('Training took: ');
           this.net = new brain.NeuralNetworkGPU();
@@ -216,15 +215,16 @@ export class TitanicComponent implements OnInit, OnDestroy {
     console.log('Ranges', ranges);
     // Then, we normalize each passenger
     return passengers.map(passenger => {
+      const toFixed = 1;
       return {
         input: {
           // PassengerId: (passenger.PassengerId - ranges.PassengerId[0]) / (ranges.PassengerId[1] - ranges.PassengerId[0]),
           // Survived: (passenger.Survived - ranges.Survived[0]) / (ranges.Survived[1] - ranges.Survived[0]),
-          Pclass: (passenger.Pclass - ranges.Pclass[0]) / (ranges.Pclass[1] - ranges.Pclass[0]),
+          Pclass: Number(((passenger.Pclass - ranges.Pclass[0]) / (ranges.Pclass[1] - ranges.Pclass[0])).toFixed(toFixed)),
           Sex: passenger.Sex === 'male' ? 1 : 0, // We treat 'Sex' as a categorical variable
-          Age: (passenger.Age - ranges.Age[0]) / (ranges.Age[1] - ranges.Age[0]),
-          SibSp: (passenger.SibSp - ranges.SibSp[0]) / (ranges.SibSp[1] - ranges.SibSp[0]),
-          Parch: (passenger.Parch - ranges.Parch[0]) / (ranges.Parch[1] - ranges.Parch[0]),
+          Age: Number(((passenger.Age - ranges.Age[0]) / (ranges.Age[1] - ranges.Age[0])).toFixed(toFixed)),
+          SibSp: Number(((passenger.SibSp - ranges.SibSp[0]) / (ranges.SibSp[1] - ranges.SibSp[0])).toFixed(toFixed)),
+          Parch: Number(((passenger.Parch - ranges.Parch[0]) / (ranges.Parch[1] - ranges.Parch[0])).toFixed(toFixed)),
           // Ticket: passenger.Ticket, // 'Ticket' is a unique string identifier and cannot be meaningfully normalized
           // Fare: (passenger.Fare - ranges.Fare[0]) / (ranges.Fare[1] - ranges.Fare[0]),
           // Cabin: passenger.Cabin, // 'Cabin' is a categorical variable and cannot be meaningfully normalized

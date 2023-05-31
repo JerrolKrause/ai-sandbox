@@ -52,7 +52,7 @@ export class TitanicService {
    */
   public loadData() {
     this.passengers$.next(null);
-    this.http.get<Passenger[]>('/assets/datasets/titanic.json').subscribe(r => this.passengers$.next([...r]));
+    this.http.get<Passenger[]>('/assets/datasets/titanic2.json').subscribe(r => this.passengers$.next([...r]));
   }
 
   /**
@@ -62,7 +62,7 @@ export class TitanicService {
    * @returns
    */
   public trainNeuralNet$(trainingData: any, modelId?: string, useWorker = false): Observable<{ data: any; timeStamp: number }> {
-    // trainingData.length = 20;
+    trainingData.length = 15;
     console.warn('Starting Training...', trainingData);
     // Check if model is stored in localstorage, return that instead
     if (modelId && localStorage.getItem(modelId)) {
@@ -77,6 +77,17 @@ export class TitanicService {
       console.time('Training took: ');
       const net = new brain.NeuralNetworkGPU();
       net.train(trainingData);
+
+      /**
+      for (let i = 0; i < trainingData.length; i += 10) {
+        setTimeout(() => {
+          let subset = trainingData.slice(i, i + 10);
+          console.log(subset);
+          net.train(subset);
+        }, 0);
+      }
+       */
+
       console.timeEnd('Training took: ');
       return new BehaviorSubject({
         data: net.toJSON(),
