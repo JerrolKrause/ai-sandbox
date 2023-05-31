@@ -22,11 +22,11 @@
               <p-selectButton [options]="classOptions" formControlName="Pclass" optionLabel="label" optionValue="value"></p-selectButton>
             </p>
             <p>
-              <strong># of Siblings ({{ passengerForm.get('SibSp')?.value || 0 }})</strong><br />
-              <p-slider formControlName="SibSp" styleClass="mt-3" [min]="0" [max]="8"></p-slider>
-              <!--
+              <strong>Accompanying Family Members</strong><br />
+              <!--<p-slider formControlName="SibSp" styleClass="mt-3" [min]="0" [max]="8"></p-slider>
+              -->
               <p-selectButton [options]="siblingOptions" formControlName="SibSp" optionLabel="label" optionValue="value"></p-selectButton>
-            --></p>
+            </p>
             <p>
               <strong class="mb-2">Age ({{ passengerForm.get('Age')?.value || 0 }})</strong><br />
               <p-slider formControlName="Age" styleClass="mt-3" [min]="0" [max]="76"></p-slider>

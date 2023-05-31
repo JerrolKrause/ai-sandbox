@@ -1,8 +1,8 @@
+import { Memoize, removeNils } from '$shared';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
 import { BehaviorSubject, debounceTime, filter, map, mergeMap, take } from 'rxjs';
-import { Memoize } from '../../shared';
 import { Passenger, PassengerNormalized } from './shared/models';
 import { TitanicService } from './shared/services/titanic.service';
 
@@ -38,11 +38,13 @@ export class TitanicComponent implements OnInit, OnDestroy {
   });
 
   public sexOptions = [
+    { label: 'None', value: null },
     { label: 'Male', value: 1 },
     { label: 'Female', value: 0 },
   ];
 
   public siblingOptions = [
+    { label: 'None', value: null },
     { label: 0, value: this.normalizeNumberRange(0, 0, 8) },
     { label: 1, value: this.normalizeNumberRange(1, 0, 8) },
     { label: 2, value: this.normalizeNumberRange(2, 0, 8) },
@@ -55,6 +57,7 @@ export class TitanicComponent implements OnInit, OnDestroy {
   ];
 
   public classOptions = [
+    { label: 'None', value: null },
     { label: '1st Class', value: this.normalizeNumberRange(1, 1, 3) },
     { label: '2nd Class', value: this.normalizeNumberRange(2, 1, 3) },
     { label: '3rd Class', value: this.normalizeNumberRange(3, 1, 3) },
@@ -65,9 +68,27 @@ export class TitanicComponent implements OnInit, OnDestroy {
 
   constructor(private fb: FormBuilder, private svc: TitanicService) {
     this.passengerForm.reset();
-    this.passengerForm.valueChanges.pipe(takeUntilDestroyed(), debounceTime(250)).subscribe(passenger => this.formChange(passenger));
+    this.passengerForm.valueChanges.pipe(takeUntilDestroyed(), debounceTime(10)).subscribe(passenger => this.formChange(passenger));
+
+    this.svc.passengers$.subscribe(passengers => {
+      if (!passengers?.length) {
+        return;
+      }
+      const survivors = passengers.reduce((a, b) => (b.Survived ? { yes: a.yes + 1, no: a.no } : { yes: a.yes, no: a.no + 1 }), { yes: 0, no: 0 });
+      console.log('Survivors', survivors, Math.floor((survivors.yes * 100) / survivors.no) + '% Survived');
+      const men = passengers
+        .filter(p => p.Sex === 'male')
+        .reduce((a, b) => (b.Survived ? { yes: a.yes + 1, no: a.no } : { yes: a.yes, no: a.no + 1 }), { yes: 0, no: 0 });
+      console.log('Survivors Men', men, Math.floor((men.yes * 100) / (men.yes + men.no)) + '% Survived');
+
+      const women = passengers
+        .filter(p => p.Sex !== 'male')
+        .reduce((a, b) => (b.Survived ? { yes: a.yes + 1, no: a.no } : { yes: a.yes, no: a.no + 1 }), { yes: 0, no: 0 });
+      console.log('Survivors Women', women, Math.floor((women.yes * 100) / (women.yes + women.no)) + '% Survived');
+    });
+
     // Retrain neural net when passenger data changes
-    this.svc.passengersStore$
+    this.svc.passengers$
       .pipe(
         takeUntilDestroyed(),
         filter(x => !!x),
@@ -75,9 +96,23 @@ export class TitanicComponent implements OnInit, OnDestroy {
         mergeMap(dataset => this.svc.trainNeuralNet$(dataset, this.localStorageKey)),
       )
       .subscribe(message => {
+        console.log(message);
+        /** */
+        // console.log('Training took: ', Math.floor(message.timeStamp / 1000), 'seconds', message);
+        console.time('Loading model took: ');
         this.net = new brain.NeuralNetworkGPU();
         this.net.fromJSON(message.data);
+        console.log('Model: ', message.data);
         this.stateChange({ loading: false, timeToTrain: message.timeStamp });
+        console.timeEnd('Loading model took: ');
+        /**
+          console.time('Training took: ');
+          this.net = new brain.NeuralNetworkGPU();
+          this.net.train(message);
+
+          this.stateChange({ loading: false, timeToTrain: message.timeStamp });
+          console.timeEnd('Training took: ');
+        */
       });
   }
 
@@ -105,7 +140,10 @@ export class TitanicComponent implements OnInit, OnDestroy {
    * @param passenger
    */
   private formChange(passenger: Nillable<PassengerNormalized>) {
-    const result = this.net.run(passenger);
+    const data = removeNils({ ...passenger });
+
+    console.log(data);
+    const result = this.net.run(data);
     this.stateChange({ survivalOdds: Math.floor(result.Survived * 100) });
   }
 
@@ -170,29 +208,25 @@ export class TitanicComponent implements OnInit, OnDestroy {
     return ranges;
   }
 
-  private normalizePassenger(passenger: Passenger) {
-    // const ranges = this.determineValidRanges(passengers);
-    return;
-  }
-
   normalizePassengers(passengers: Passenger[] | null) {
     if (!passengers) {
       return [];
     }
     const ranges = this.determineValidRanges(passengers);
+    console.log('Ranges', ranges);
     // Then, we normalize each passenger
     return passengers.map(passenger => {
       return {
         input: {
-          PassengerId: (passenger.PassengerId - ranges.PassengerId[0]) / (ranges.PassengerId[1] - ranges.PassengerId[0]),
-          Survived: (passenger.Survived - ranges.Survived[0]) / (ranges.Survived[1] - ranges.Survived[0]),
+          // PassengerId: (passenger.PassengerId - ranges.PassengerId[0]) / (ranges.PassengerId[1] - ranges.PassengerId[0]),
+          // Survived: (passenger.Survived - ranges.Survived[0]) / (ranges.Survived[1] - ranges.Survived[0]),
           Pclass: (passenger.Pclass - ranges.Pclass[0]) / (ranges.Pclass[1] - ranges.Pclass[0]),
           Sex: passenger.Sex === 'male' ? 1 : 0, // We treat 'Sex' as a categorical variable
           Age: (passenger.Age - ranges.Age[0]) / (ranges.Age[1] - ranges.Age[0]),
           SibSp: (passenger.SibSp - ranges.SibSp[0]) / (ranges.SibSp[1] - ranges.SibSp[0]),
           Parch: (passenger.Parch - ranges.Parch[0]) / (ranges.Parch[1] - ranges.Parch[0]),
           // Ticket: passenger.Ticket, // 'Ticket' is a unique string identifier and cannot be meaningfully normalized
-          Fare: (passenger.Fare - ranges.Fare[0]) / (ranges.Fare[1] - ranges.Fare[0]),
+          // Fare: (passenger.Fare - ranges.Fare[0]) / (ranges.Fare[1] - ranges.Fare[0]),
           // Cabin: passenger.Cabin, // 'Cabin' is a categorical variable and cannot be meaningfully normalized
           // Embarked: passenger.Embarked, // 'Embarked' is a categorical variable and cannot be meaningfully normalized
         },

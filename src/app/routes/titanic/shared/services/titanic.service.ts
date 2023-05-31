@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, filter, fromEvent, map, take, tap } from 'rxjs';
 import { Passenger } from '../models';
 
+declare var brain: any;
+
 @Injectable({ providedIn: 'root' })
 export class TitanicService {
   /** Web worker used to train neural nets */
@@ -12,9 +14,9 @@ export class TitanicService {
   public nnModelReceived$ = fromEvent<MessageEvent>(this.worker, 'message').pipe(filter(x => !!x && x.origin === ''));
 
   /** Passengers on the titanic */
-  public passengersStore$ = new BehaviorSubject<Passenger[] | null>(null);
+  public passengers$ = new BehaviorSubject<Passenger[] | null>(null);
 
-  public passengersRanges$ = this.passengersStore$.pipe(
+  public passengersRanges$ = this.passengers$.pipe(
     map(passengers => {
       return (passengers || []).reduce(
         (acc, passenger) => {
@@ -49,8 +51,8 @@ export class TitanicService {
    * Load or reload passenger data
    */
   public loadData() {
-    this.passengersStore$.next(null);
-    this.http.get<Passenger[]>('/assets/datasets/titanic.json').subscribe(r => this.passengersStore$.next([...r]));
+    this.passengers$.next(null);
+    this.http.get<Passenger[]>('/assets/datasets/titanic.json').subscribe(r => this.passengers$.next([...r]));
   }
 
   /**
@@ -59,7 +61,10 @@ export class TitanicService {
    * @param modelId
    * @returns
    */
-  public trainNeuralNet$(trainingData: any, modelId?: string): Observable<{ data: any; timeStamp: number }> {
+  public trainNeuralNet$(trainingData: any, modelId?: string, useWorker = false): Observable<{ data: any; timeStamp: number }> {
+    // trainingData.length = 20;
+    console.warn('Starting Training...', trainingData);
+    // Check if model is stored in localstorage, return that instead
     if (modelId && localStorage.getItem(modelId)) {
       const model = JSON.parse(localStorage.getItem(modelId) || '{}');
       return new BehaviorSubject({
@@ -67,6 +72,25 @@ export class TitanicService {
         timeStamp: 0,
       }).pipe(take(1));
     }
+    // If NOT using a webworker, do computation in main thread instead
+    if (!useWorker) {
+      console.time('Training took: ');
+      const net = new brain.NeuralNetworkGPU();
+      net.train(trainingData);
+      console.timeEnd('Training took: ');
+      return new BehaviorSubject({
+        data: net.toJSON(),
+        timeStamp: 0,
+      }).pipe(
+        tap(model => {
+          if (modelId) {
+            localStorage.setItem(modelId, JSON.stringify(model.data));
+          }
+        }),
+        take(1),
+      );
+    }
+    // Use web worker
     this.worker.postMessage(trainingData); // send data to the worker
     return this.nnModelReceived$.pipe(
       tap(model => {
