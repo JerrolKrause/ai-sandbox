@@ -62,7 +62,7 @@ export class TitanicService {
    * @returns
    */
   public trainNeuralNet$(trainingData: any, modelId?: string, useWorker = false): Observable<{ data: any; timeStamp: number }> {
-    trainingData.length = 15;
+    trainingData.length = 12;
     console.warn('Starting Training...', trainingData);
     // Check if model is stored in localstorage, return that instead
     if (modelId && localStorage.getItem(modelId)) {
