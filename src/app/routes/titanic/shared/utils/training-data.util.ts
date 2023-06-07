@@ -1,10 +1,14 @@
 interface Ops<t> {
+  /** Key in the model to access a property */
   key: keyof t;
+  /** Apply normalization or standardization to this value */
   op?: null | 'n' | 's';
+  /** A function that receives the model and returns a value. This will be used in place of the actual value in the model */
+  value?: (m: t) => number;
 }
 
 /**
- * Convert passenger data to training data
+ * Convert model data to training data
  * @param passengers
  * @returns
  */
@@ -12,36 +16,42 @@ export const modelToTrainingData = <t>(models: t[] | null, values: Ops<t>[] | nu
   if (!models || !values) {
     return [];
   }
-  const mappedData: any[][] = [];
 
-  console.log('Model', models);
-  console.log('Values', values);
+  // First Operation:
+  // Loop through all the models and put all the same values in one array
+  // This allows that data to be normalized or standardized
+  const flattenedData: any[][] = [];
   // Loop through models
   for (var x = 0; x < models.length; x++) {
     const m = models[x];
     // Loop through the values
     for (var y = 0; y < values.length; y++) {
       const v = values[y];
-      const value = m[v.key];
-      if (!mappedData[y]) {
-        mappedData[y] = [];
+      let value: t[keyof t] | number = m[v.key];
+      if (v.value) {
+        value = v.value(m);
       }
-      mappedData[y].push(value);
+      if (!flattenedData[y]) {
+        flattenedData[y] = [];
+      }
+      flattenedData[y].push(value);
     }
   }
 
+  // Second Operation
+  // Perform the normalization or standardization as required
+  const mappedData = flattenedData.map((data, i) => mapData(data, values[i].op));
+
+  // Third Operation
+  // Reassemble the normalized/standardized data back into the original models array with all the values joined up
   const finalOutput: number[][] = [];
   for (var x = 0; x < models.length; x++) {
     const modelNew: number[] = [];
     for (var y = 0; y < values.length; y++) {
-      console.log(x, y);
       modelNew.push(mappedData[y][x]);
     }
     finalOutput.push(modelNew);
   }
-
-  console.log('mappedData', mappedData);
-  console.log('finalOutput', finalOutput);
 
   return finalOutput;
 };

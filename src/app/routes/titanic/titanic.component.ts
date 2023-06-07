@@ -83,6 +83,7 @@ export class TitanicComponent implements OnInit, OnDestroy {
           console.time('Remap Time');
           console.log(
             modelToTrainingData(passengers, [
+              { key: 'Sex', value: p => (p.Sex === 'male' ? 1 : 0) },
               { key: 'Age', op: 'n' },
               { key: 'SibSp', op: 'n' },
             ]),
