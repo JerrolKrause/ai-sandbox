@@ -62,7 +62,6 @@ export class TitanicService {
    * @returns
    */
   public trainNeuralNet$(trainingData: any, modelId?: string, useWorker = true): Observable<{ data: any; timeStamp: number }> {
-    console.warn('Starting Training...', trainingData);
     // Check if model is stored in localstorage, return that instead
     if (modelId && localStorage.getItem(modelId)) {
       const model = JSON.parse(localStorage.getItem(modelId) || '{}');
@@ -71,22 +70,12 @@ export class TitanicService {
         timeStamp: 0,
       }).pipe(take(1));
     }
+    console.warn('Starting Training...', trainingData);
     // If NOT using a webworker, do computation in main thread instead
     if (!useWorker) {
       console.time('Training took: ');
       const net = new brain.NeuralNetworkGPU({ hiddenLayers: [3] });
       net.train(trainingData);
-
-      /**
-      for (let i = 0; i < trainingData.length; i += 10) {
-        setTimeout(() => {
-          let subset = trainingData.slice(i, i + 10);
-          console.log(subset);
-          net.train(subset);
-        }, 0);
-      }
-       */
-
       console.timeEnd('Training took: ');
       return new BehaviorSubject({
         data: net.toJSON(),
@@ -129,5 +118,32 @@ export class TitanicService {
 
   private toTitleCase(str: string) {
     return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+  }
+
+  /**
+   * Takes a number array and a method array and allows the data to be either normalized or standardized.
+   * @param data
+   * @param method
+   * @returns
+   */
+  public mapData(data: number[], method: ('n' | 's' | null)[]) {
+    let max = Math.max(...data);
+    let min = Math.min(...data);
+    let mean = data.reduce((sum, val) => sum + val, 0) / data.length;
+    let standardDeviation = Math.sqrt(data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / data.length);
+    // Loop through data, if method array contains a corresponding N or S, normalize or standardize the data
+    return data.map((num, i) => {
+      switch (method[i]) {
+        // Normalize
+        case 'n':
+          return (num - min) / (max - min);
+        // Standardize
+        case 's':
+          return (num - mean) / standardDeviation;
+        // Do not modify number
+        default:
+          return num;
+      }
+    });
   }
 }

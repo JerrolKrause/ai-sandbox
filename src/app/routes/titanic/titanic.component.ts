@@ -5,6 +5,7 @@ import { FormBuilder } from '@angular/forms';
 import { BehaviorSubject, debounceTime, filter, map, mergeMap, take } from 'rxjs';
 import { Passenger, PassengerNormalized } from './shared/models';
 import { TitanicService } from './shared/services/titanic.service';
+import { modelToTrainingData } from './shared/utils';
 
 declare var brain: any;
 
@@ -70,25 +71,6 @@ export class TitanicComponent implements OnInit, OnDestroy {
     this.passengerForm.reset();
     this.passengerForm.valueChanges.pipe(takeUntilDestroyed(), debounceTime(10)).subscribe(passenger => this.formChange(passenger));
 
-    /**
-    this.svc.passengers$.subscribe(passengers => {
-      if (!passengers?.length) {
-        return;
-      }
-      const survivors = passengers.reduce((a, b) => (b.Survived ? { yes: a.yes + 1, no: a.no } : { yes: a.yes, no: a.no + 1 }), { yes: 0, no: 0 });
-      console.log('Survivors', survivors, Math.floor((survivors.yes * 100) / survivors.no) + '% Survived');
-      const men = passengers
-        .filter(p => p.Sex === 'male')
-        .reduce((a, b) => (b.Survived ? { yes: a.yes + 1, no: a.no } : { yes: a.yes, no: a.no + 1 }), { yes: 0, no: 0 });
-      console.log('Survivors Men', men, Math.floor((men.yes * 100) / (men.yes + men.no)) + '% Survived');
-
-      const women = passengers
-        .filter(p => p.Sex !== 'male')
-        .reduce((a, b) => (b.Survived ? { yes: a.yes + 1, no: a.no } : { yes: a.yes, no: a.no + 1 }), { yes: 0, no: 0 });
-      console.log('Survivors Women', women, Math.floor((women.yes * 100) / (women.yes + women.no)) + '% Survived');
-    });
-     */
-
     // Retrain neural net when passenger data changes
     this.svc.passengers$
       .pipe(
@@ -96,7 +78,17 @@ export class TitanicComponent implements OnInit, OnDestroy {
         filter(x => !!x),
         // map(passengers => this.normalizePassengers(passengers)),
         map(passengers => {
-          passengers = passengers?.filter((_x, i) => i < 20) || [];
+          passengers = passengers?.filter((_x, i) => i < 10) || [];
+          // console.log(passengers);
+          console.time('Remap Time');
+          console.log(
+            modelToTrainingData(passengers, [
+              { key: 'Age', op: 'n' },
+              { key: 'SibSp', op: 'n' },
+            ]),
+          );
+          console.timeEnd('Remap Time');
+          /**
           // console.log('Passengers', passengers);
           const men = passengers?.filter(x => x.Sex === 'male');
           console.log(
@@ -110,7 +102,8 @@ export class TitanicComponent implements OnInit, OnDestroy {
             women?.filter(x => x.Survived).length + '/' + women.length,
             Math.floor((women?.filter(x => x.Survived).length / women.length) * 100) + '%',
           );
-          return passengers.map(passenger => {
+           */
+          return passengers?.map(passenger => {
             return {
               input: [passenger.Sex === 'male' ? 1 : 0],
               output: [passenger.Survived],
@@ -126,7 +119,7 @@ export class TitanicComponent implements OnInit, OnDestroy {
         // console.time('Loading model took: ');
         this.net = new brain.NeuralNetworkGPU();
         this.net.fromJSON(message.data);
-        console.log('Model: ', message.data);
+        // console.log('Model: ', message.data);
         this.stateChange({ loading: false, timeToTrain: message.timeStamp });
         // console.timeEnd('Loading model took: ');
         /**
@@ -140,7 +133,9 @@ export class TitanicComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    //  console.log(1, this.svc.mapData([0, 50, 100], []));
+  }
 
   /**
    * Remove any stored/trained model and reset state

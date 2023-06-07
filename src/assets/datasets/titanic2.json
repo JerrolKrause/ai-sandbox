@@ -75,7 +75,7 @@
     "Pclass": 3,
     "Name": "Moran, Mr. James",
     "Sex": "male",
-    "Age": "",
+    "Age": 0,
     "SibSp": 0,
     "Parch": 0,
     "Ticket": 330877,
