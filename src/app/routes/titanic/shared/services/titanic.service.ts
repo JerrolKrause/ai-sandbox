@@ -61,8 +61,7 @@ export class TitanicService {
    * @param modelId
    * @returns
    */
-  public trainNeuralNet$(trainingData: any, modelId?: string, useWorker = false): Observable<{ data: any; timeStamp: number }> {
-    trainingData.length = 12;
+  public trainNeuralNet$(trainingData: any, modelId?: string, useWorker = true): Observable<{ data: any; timeStamp: number }> {
     console.warn('Starting Training...', trainingData);
     // Check if model is stored in localstorage, return that instead
     if (modelId && localStorage.getItem(modelId)) {
@@ -75,7 +74,7 @@ export class TitanicService {
     // If NOT using a webworker, do computation in main thread instead
     if (!useWorker) {
       console.time('Training took: ');
-      const net = new brain.NeuralNetworkGPU();
+      const net = new brain.NeuralNetworkGPU({ hiddenLayers: [3] });
       net.train(trainingData);
 
       /**

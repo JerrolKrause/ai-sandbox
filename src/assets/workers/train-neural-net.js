@@ -12,7 +12,7 @@ self.onmessage = function (trainingData) {
     console.error('Error loading Brain.js');
     return;
   }
-  const net = new brain.NeuralNetworkGPU();
+  const net = new brain.NeuralNetworkGPU({ hiddenLayers: [3] });
   net.train(trainingData.data);
   const model = net.toJSON();
   self.postMessage(model);
