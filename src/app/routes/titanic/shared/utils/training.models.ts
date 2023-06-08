@@ -69,5 +69,6 @@ export module AutoNN {
     trainingData: any[];
     outputs: number[];
     source: Source<t>;
+    srcModel: t[];
   }
 }

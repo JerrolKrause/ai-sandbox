@@ -77,61 +77,61 @@ export class TitanicComponent implements OnInit, OnDestroy {
         takeUntilDestroyed(),
         filter(x => !!x),
         map(passengers => {
-          passengers = this.svc.seededShuffle(passengers || [], 6);
-          passengers = passengers.filter((_x, i) => i < 15).map(p => ({ ...p, Age: typeof p.Age === 'string' ? 0 : p.Age }));
-          // console.log(passengers);
-
-          /**
-          console.log(
-            'Survived:',
-            passengers.map(p => p.Survived),
-          ); */
-          console.log(
-            'Ages',
-            passengers?.map(p => [p.Age, p.Survived]),
-          );
-          const men = passengers?.filter(x => x.Sex === 'male');
-          console.log(
-            'Male',
-            men?.filter(x => x.Survived).length + '/' + men.length,
-            Math.floor((men?.filter(x => x.Survived).length / men.length) * 100) + '%',
-          );
-          const women = passengers?.filter(x => x.Sex !== 'male');
-          console.log(
-            'Women',
-            women?.filter(x => x.Survived).length + '/' + women.length,
-            Math.floor((women?.filter(x => x.Survived).length / women.length) * 100) + '%',
-          );
-          const temp = modelToTrainingData(
+          passengers = this.svc
+            .seededShuffle(passengers || [], 6)
+            .filter((_x, i) => i < 10)
+            .map(p => ({ ...p, Age: typeof p.Age === 'string' ? 0 : p.Age }));
+          return modelToTrainingData(
             passengers,
             [
               { key: 'Sex', value: p => (p.Sex === 'male' ? 1 : 0) },
-              // { key: 'Age', op: 's' },
+              { key: 'Age', op: 'n' },
               // { key: 'SibSp', op: 'n' },
             ],
             { key: 'Survived' },
           );
-          console.log(temp);
-          return temp;
         }),
         map(dataset => ({
           dataset,
           model: this.svc.trainNeuralNet(dataset?.trainingData, this.localStorageKey),
         })),
-
-        // mergeMap(dataset => this.svc.trainNeuralNet$(dataset, this.localStorageKey)),
       )
-      .subscribe(message => {
-        if (!message) {
+      .subscribe(neuralNet => {
+        if (!neuralNet) {
           return;
         }
+        console.log('neuralNet', neuralNet.dataset);
 
-        this.net = new brain.NeuralNetworkGPU();
+        try {
+          this.net = new brain.NeuralNetworkGPU();
+          this.net.fromJSON(neuralNet.model);
+        } catch (err) {
+          console.error('Error with neural net model. Clearing saved model.');
+          localStorage.removeItem(this.localStorageKey);
+        }
 
-        this.net.fromJSON(message.model);
+        console.log('Ages', neuralNet.dataset?.source.Age.values);
+        console.log('Survived', neuralNet.dataset?.outputs);
 
-        console.log('Men', this.net.run([1])[0]);
-        console.log('Women', this.net.run([0])[0]);
+        /** */
+        const men = neuralNet.dataset?.srcModel?.filter(x => x.Sex === 'male') || [];
+        console.log('Male', men?.filter(x => x.Survived).length + '/' + men.length, Math.floor((men?.filter(x => x.Survived).length / men.length) * 100) + '%');
+        const women = neuralNet.dataset?.srcModel?.filter(x => x.Sex !== 'male') || [];
+        console.log(
+          'Women',
+          women?.filter(x => x.Survived).length + '/' + women.length,
+          Math.floor((women?.filter(x => x.Survived).length / women.length) * 100) + '%',
+        );
+
+        try {
+          console.log('Men', this.net.run([1, null])[0]);
+          console.log('Women', this.net.run([0, null])[0]);
+          console.log('Women 0', this.net.run([0, neuralNet.dataset?.source.Age.normalize(0)])[0]);
+          console.log('Women 23', this.net.run([0, neuralNet.dataset?.source.Age.normalize(33)])[0]);
+          console.log('Women 38', this.net.run([0, neuralNet.dataset?.source.Age.normalize(38)])[0]);
+        } catch (err) {
+          console.error('Error with training data.', err);
+        }
 
         /**
         const ageRange = [0, 10, 20, 30, 40, 50];

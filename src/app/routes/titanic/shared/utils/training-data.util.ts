@@ -54,7 +54,7 @@ export const modelToTrainingData = <t>(
     output: [outputs[i]],
   }));
 
-  return { source, trainingData, outputs };
+  return { source, trainingData, outputs, srcModel: models };
 };
 
 /**
