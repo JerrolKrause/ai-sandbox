@@ -67,6 +67,7 @@ export module AutoNN {
 
   export interface TrainingModel<t> {
     trainingData: any[];
+    outputs: number[];
     source: Source<t>;
   }
 }

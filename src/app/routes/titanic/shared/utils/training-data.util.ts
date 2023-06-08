@@ -11,7 +11,7 @@ export const modelToTrainingData = <t>(
   values: AutoNN.Operation<t>[] | null,
   output: AutoNN.Operation<t>,
 ): AutoNN.TrainingModel<t> | null => {
-  console.log('models', models);
+  // console.log('models', models);
 
   if (!models || !values) {
     console.error('Missing essential data');
@@ -39,55 +39,22 @@ export const modelToTrainingData = <t>(
     }
   }
 
+  // Generate outputs, this is fed to the neural net as the output property
+  const outputs = models.map(m => m[output.key]) as number[];
+
+  // Convert the now flattened data into training model classes. This class handles most of the data operations
   const source = flattenedData.reduce((a, b, i) => {
     const value = values[i];
     return { ...a, [value.key]: new TrainingModel(b, value) };
   }, {} as AutoNN.Source<t>);
 
-  console.log('source', source);
+  // Convert models and flattened data into format needed by the neural net for training
+  const trainingData = models.map((_m, i) => ({
+    input: values.map(v => source[v.key].data[i]),
+    output: [outputs[i]],
+  }));
 
-  /**
-  // Loop through the new dataset and
-  flattenedData.forEach((data, i) => {
-    const value = values[i];
-
-    // source[value.key].values = values;
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const denormalize = (num: number) => num * (max - min) + min;
-    const normalize = (num: number) => (num - min) / (max - min);
-    const sourceOjb = {
-      data,
-      max,
-      min,
-      denormalize,
-      normalize,
-    };
-    source[value.key] = { ...source[value.key], ...sourceOjb };
-  });
-   */
-  console.warn('flattenedData', flattenedData);
-  // Second Operation
-  // Perform the normalization or standardization as required
-  const mappedData = flattenedData.map((data, i) => mapData(data, values[i].op));
-  console.warn('mappedData', mappedData);
-  // Third Operation
-  // Reassemble the normalized/standardized data back into the original models array with all the values joined up
-  const trainingData = [];
-  for (var x = 0; x < models.length; x++) {
-    const modelNew: number[] = [];
-    for (var y = 0; y < values.length; y++) {
-      modelNew.push(mappedData[y][x]);
-    }
-
-    // Format the model used for brain.js. Add in the output model
-    trainingData.push({
-      input: modelNew,
-      output: [models[x][output.key]],
-    });
-  }
-  console.warn('source, trainingData', { source, trainingData });
-  return { source, trainingData };
+  return { source, trainingData, outputs };
 };
 
 /**

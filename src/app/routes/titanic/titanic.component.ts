@@ -2,7 +2,7 @@ import { Memoize, removeNils } from '$shared';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
-import { BehaviorSubject, debounceTime, filter, map, mergeMap, take } from 'rxjs';
+import { BehaviorSubject, debounceTime, filter, map, take } from 'rxjs';
 import { Passenger, PassengerNormalized } from './shared/models';
 import { TitanicService } from './shared/services/titanic.service';
 import { modelToTrainingData } from './shared/utils';
@@ -68,7 +68,6 @@ export class TitanicComponent implements OnInit, OnDestroy {
   private localStorageKey = 'titanic';
 
   constructor(private fb: FormBuilder, private svc: TitanicService) {
-    let passengersSrc: Passenger[] = [];
     this.passengerForm.reset();
     this.passengerForm.valueChanges.pipe(takeUntilDestroyed(), debounceTime(10)).subscribe(passenger => this.formChange(passenger));
 
@@ -77,22 +76,11 @@ export class TitanicComponent implements OnInit, OnDestroy {
       .pipe(
         takeUntilDestroyed(),
         filter(x => !!x),
-        // map(passengers => this.normalizePassengers(passengers)),
         map(passengers => {
-          passengers = passengers?.filter((_x, i) => i < 20) || [];
-          passengersSrc = passengers;
-          passengers = passengers.map(p => ({ ...p, Age: typeof p.Age === 'string' ? 0 : p.Age }));
+          passengers = this.svc.seededShuffle(passengers || [], 6);
+          passengers = passengers.filter((_x, i) => i < 15).map(p => ({ ...p, Age: typeof p.Age === 'string' ? 0 : p.Age }));
           // console.log(passengers);
-          const temp = modelToTrainingData(
-            passengers,
-            [
-              { key: 'Sex', value: p => (p.Sex === 'male' ? 1 : 0) },
-              { key: 'Age', op: 's' },
-              // { key: 'SibSp', op: 'n' },
-            ],
-            { key: 'Survived' },
-          );
-          console.log(temp);
+
           /**
           console.log(
             'Survived:',
@@ -114,34 +102,45 @@ export class TitanicComponent implements OnInit, OnDestroy {
             women?.filter(x => x.Survived).length + '/' + women.length,
             Math.floor((women?.filter(x => x.Survived).length / women.length) * 100) + '%',
           );
-          console.log('Training Data', temp);
-          return temp?.trainingData;
+          const temp = modelToTrainingData(
+            passengers,
+            [
+              { key: 'Sex', value: p => (p.Sex === 'male' ? 1 : 0) },
+              // { key: 'Age', op: 's' },
+              // { key: 'SibSp', op: 'n' },
+            ],
+            { key: 'Survived' },
+          );
+          console.log(temp);
+          return temp;
         }),
+        map(dataset => ({
+          dataset,
+          model: this.svc.trainNeuralNet(dataset?.trainingData, this.localStorageKey),
+        })),
 
-        mergeMap(dataset => this.svc.trainNeuralNet$(dataset, this.localStorageKey)),
+        // mergeMap(dataset => this.svc.trainNeuralNet$(dataset, this.localStorageKey)),
       )
       .subscribe(message => {
-        /** */
-        // console.log('Training took: ', Math.floor(message.timeStamp / 1000), 'seconds', message);
-        // console.time('Loading model took: ');
-        this.net = new brain.NeuralNetworkGPU();
-        this.net.fromJSON(message.data);
+        if (!message) {
+          return;
+        }
 
+        this.net = new brain.NeuralNetworkGPU();
+
+        this.net.fromJSON(message.model);
+
+        console.log('Men', this.net.run([1])[0]);
+        console.log('Women', this.net.run([0])[0]);
+
+        /**
         const ageRange = [0, 10, 20, 30, 40, 50];
         ageRange.forEach(a => {
           console.log('Age: ', a, this.net.run([a])[0]);
         });
+         */
         // console.log('Model: ', message.data);
-        this.stateChange({ loading: false, timeToTrain: message.timeStamp });
-        // console.timeEnd('Loading model took: ');
-        /**
-          console.time('Training took: ');
-          this.net = new brain.NeuralNetworkGPU();
-          this.net.train(message);
-
-          this.stateChange({ loading: false, timeToTrain: message.timeStamp });
-          console.timeEnd('Training took: ');
-        */
+        this.stateChange({ loading: false });
       });
   }
 

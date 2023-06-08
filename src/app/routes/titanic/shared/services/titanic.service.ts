@@ -55,6 +55,24 @@ export class TitanicService {
     this.http.get<Passenger[]>('/assets/datasets/titanic2.json').subscribe(r => this.passengers$.next([...r]));
   }
 
+  public trainNeuralNet(trainingData: any, modelId?: string) {
+    // Check if model is stored in localstorage, return that instead
+    if (modelId && localStorage.getItem(modelId)) {
+      const model = JSON.parse(localStorage.getItem(modelId) || '{}');
+      return model;
+    }
+    console.log('Starting neural net training. This could take a while...');
+    console.time('Training model took: ');
+    const net = new brain.NeuralNetworkGPU({ hiddenLayers: [3] });
+    net.train(trainingData);
+    const model = net.toJSON();
+    if (modelId) {
+      localStorage.setItem(modelId, JSON.stringify(model));
+    }
+    console.timeEnd('Training model took: ');
+    return model;
+  }
+
   /**
    * Train a neural net with the provided dataset
    * @param trainingData
@@ -145,5 +163,29 @@ export class TitanicService {
           return num;
       }
     });
+  }
+
+  private createSeededRNG(seed: number) {
+    let currentSeed = seed;
+
+    // LCG parameters from Numerical Recipes
+    const a = 1664525;
+    const c = 1013904223;
+    const m = Math.pow(2, 32);
+
+    return function (): number {
+      currentSeed = (a * currentSeed + c) % m;
+      return currentSeed / m;
+    };
+  }
+
+  seededShuffle<T>(array: T[], seed: number): T[] {
+    const rng = this.createSeededRNG(seed);
+    const result = [...array];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
   }
 }
