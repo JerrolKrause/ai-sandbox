@@ -63,7 +63,7 @@ export module AutoNN {
     min: number;
   }
 
-  export type Source<t> = Record<keyof t, SourceData>;
+  export type Source<t> = Record<keyof t, Model<t>>;
 
   export interface TrainingModel<t> {
     trainingData: any[];

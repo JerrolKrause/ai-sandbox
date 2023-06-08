@@ -115,7 +115,7 @@ export class TitanicComponent implements OnInit, OnDestroy {
             Math.floor((women?.filter(x => x.Survived).length / women.length) * 100) + '%',
           );
           console.log('Training Data', temp);
-          return temp.trainingData;
+          return temp?.trainingData;
         }),
 
         mergeMap(dataset => this.svc.trainNeuralNet$(dataset, this.localStorageKey)),

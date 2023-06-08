@@ -6,27 +6,16 @@ import { AutoNN } from './training.models';
  * @param passengers
  * @returns
  */
-export const modelToTrainingData = <t>(models: t[] | null, values: AutoNN.Operation<t>[] | null, output: AutoNN.Operation<t>): AutoNN.TrainingModel<t> => {
+export const modelToTrainingData = <t>(
+  models: t[] | null,
+  values: AutoNN.Operation<t>[] | null,
+  output: AutoNN.Operation<t>,
+): AutoNN.TrainingModel<t> | null => {
   console.log('models', models);
-  // Hold source data used in the compilation of the training data
-  // Consumers of the training data will need to know what data to normalize/standardize against without recalculating it
-  const source = {} as AutoNN.Source<t>;
-  // Loop through each value and create the container record in the source object
-  values?.forEach(v => {
-    if (!source[v.key]) {
-      source[v.key] = {
-        data: [],
-        max: 0,
-        min: 0,
-      };
-    }
-  });
 
   if (!models || !values) {
-    return {
-      trainingData: [],
-      source,
-    };
+    console.error('Missing essential data');
+    return null;
   }
 
   // First Operation:
@@ -50,11 +39,18 @@ export const modelToTrainingData = <t>(models: t[] | null, values: AutoNN.Operat
     }
   }
 
+  const source = flattenedData.reduce((a, b, i) => {
+    const value = values[i];
+    return { ...a, [value.key]: new TrainingModel(b, value) };
+  }, {} as AutoNN.Source<t>);
+
+  console.log('source', source);
+
+  /**
   // Loop through the new dataset and
   flattenedData.forEach((data, i) => {
     const value = values[i];
-    const temp = new TrainingModel(data, value);
-    console.log('Class', temp);
+
     // source[value.key].values = values;
     const max = Math.max(...data);
     const min = Math.min(...data);
@@ -69,6 +65,7 @@ export const modelToTrainingData = <t>(models: t[] | null, values: AutoNN.Operat
     };
     source[value.key] = { ...source[value.key], ...sourceOjb };
   });
+   */
   console.warn('flattenedData', flattenedData);
   // Second Operation
   // Perform the normalization or standardization as required
