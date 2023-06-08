@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, filter, fromEvent, map, take, tap } from 'rxjs';
+import trainedModel from '../../../../../assets/trained-models/titanic.model.json';
 import { Passenger } from '../models';
 
 declare var brain: any;
@@ -55,7 +56,11 @@ export class TitanicService {
     this.http.get<Passenger[]>('/assets/datasets/titanic2.json').subscribe(r => this.passengers$.next([...r]));
   }
 
-  public trainNeuralNet(trainingData: any, modelId?: string) {
+  public trainNeuralNet(trainingData: any, modelId?: string, useSavedModel = false) {
+    if (useSavedModel) {
+      return trainedModel;
+    }
+
     // Check if model is stored in localstorage, return that instead
     if (modelId && localStorage.getItem(modelId)) {
       const model = JSON.parse(localStorage.getItem(modelId) || '{}');
@@ -64,7 +69,13 @@ export class TitanicService {
     console.log('Starting neural net training. This could take a while...');
     console.time('Training model took: ');
     const net = new brain.NeuralNetworkGPU({ hiddenLayers: [3] });
-    net.train(trainingData);
+    const options = {
+      log: (error: any) => console.log(error),
+      logPeriod: 500,
+      // learningRate: 0.005 // Only learn down to this decimal amount
+      // errorThresh: 0.02 // Turn down error threshold to speed up training time
+    };
+    net.train(trainingData, options);
     const model = net.toJSON();
     if (modelId) {
       localStorage.setItem(modelId, JSON.stringify(model));

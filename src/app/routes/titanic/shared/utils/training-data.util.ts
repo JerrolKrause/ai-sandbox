@@ -54,9 +54,14 @@ export const modelToTrainingData = <t>(
     output: [outputs[i]],
   }));
 
+  function roundToDecimalPlace(number: number, decimalPlaces: number) {
+    const factor = Math.pow(10, decimalPlaces);
+    return Math.round(number * factor) / factor;
+  }
+
   const temp = models.map((_m, i) => ({
     input: values.reduce((a, b) => {
-      return { ...a, [b.key]: source[b.key].data[i] };
+      return { ...a, [b.key]: roundToDecimalPlace(source[b.key].data[i], 2) };
     }, {}),
     output: { [output.key]: outputs[i] },
   }));

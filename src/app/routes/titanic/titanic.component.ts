@@ -78,14 +78,14 @@ export class TitanicComponent implements OnInit, OnDestroy {
         filter(x => !!x),
         map(passengers => {
           passengers = this.svc
-            .seededShuffle(passengers || [], 6)
-            .filter((_x, i) => i < 10)
+            .seededShuffle(passengers || [], 44)
+            .filter((_x, i) => i < 400)
             .map(p => ({ ...p, Age: typeof p.Age === 'string' ? 0 : p.Age }));
           return modelToTrainingData(
             passengers,
             [
               { key: 'Sex', value: p => (p.Sex === 'male' ? 1 : 0) },
-              // { key: 'Age', op: 'n' },
+              { key: 'Age', op: 'n' },
               // { key: 'SibSp', op: 'n' },
             ],
             { key: 'Survived' },
@@ -93,14 +93,14 @@ export class TitanicComponent implements OnInit, OnDestroy {
         }),
         map(dataset => ({
           dataset,
-          model: this.svc.trainNeuralNet(dataset?.temp, this.localStorageKey),
+          model: this.svc.trainNeuralNet(dataset?.temp, this.localStorageKey, false), // Set to true to use pretrained model
         })),
       )
       .subscribe(neuralNet => {
         if (!neuralNet) {
           return;
         }
-        console.log('neuralNet', neuralNet.dataset);
+        console.log('neuralNet', neuralNet.dataset, neuralNet.model);
 
         try {
           this.net = new brain.NeuralNetworkGPU();
@@ -126,9 +126,13 @@ export class TitanicComponent implements OnInit, OnDestroy {
         try {
           console.log('Men', this.net.run({ Sex: 1 }));
           console.log('Women', this.net.run({ Sex: 0 }));
-          // console.log('Women 0', this.net.run([0, neuralNet.dataset?.source.Age.normalize(0)])[0]);
-          // console.log('Women 23', this.net.run([0, neuralNet.dataset?.source.Age.normalize(33)])[0]);
-          // console.log('Women 38', this.net.run([0, neuralNet.dataset?.source.Age.normalize(38)])[0]);
+          console.log('Age 0', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(0) }));
+          console.log('Age 10', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(10) }));
+          console.log('Age 20', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(20) }));
+          console.log('Age 30', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(30) }));
+          console.log('Age 40', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(40) }));
+          console.log('Age 50', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(50) }));
+          console.log('Age 60', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(60) }));
         } catch (err) {
           console.error('Error with training data.', err);
         }
