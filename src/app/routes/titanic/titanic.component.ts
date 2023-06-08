@@ -87,7 +87,7 @@ export class TitanicComponent implements OnInit, OnDestroy {
             passengers,
             [
               { key: 'Sex', value: p => (p.Sex === 'male' ? 1 : 0) },
-              { key: 'Age', op: 'n' },
+              { key: 'Age', op: 's' },
               // { key: 'SibSp', op: 'n' },
             ],
             { key: 'Survived' },
