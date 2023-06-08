@@ -1,26 +1,38 @@
-interface Ops<t> {
-  /** Key in the model to access a property */
-  key: keyof t;
-  /** Apply normalization or standardization to this value */
-  op?: null | 'n' | 's';
-  /** A function that receives the model and returns a value. This will be used in place of the actual value in the model */
-  value?: (m: t) => number;
-}
+import { TrainingModel } from './training-data.class';
+import { AutoNN } from './training.models';
 
 /**
  * Convert model data to training data
  * @param passengers
  * @returns
  */
-export const modelToTrainingData = <t>(models: t[] | null, values: Ops<t>[] | null) => {
+export const modelToTrainingData = <t>(models: t[] | null, values: AutoNN.Operation<t>[] | null, output: AutoNN.Operation<t>): AutoNN.TrainingModel<t> => {
+  console.log('models', models);
+  // Hold source data used in the compilation of the training data
+  // Consumers of the training data will need to know what data to normalize/standardize against without recalculating it
+  const source = {} as AutoNN.Source<t>;
+  // Loop through each value and create the container record in the source object
+  values?.forEach(v => {
+    if (!source[v.key]) {
+      source[v.key] = {
+        data: [],
+        max: 0,
+        min: 0,
+      };
+    }
+  });
+
   if (!models || !values) {
-    return [];
+    return {
+      trainingData: [],
+      source,
+    };
   }
 
   // First Operation:
   // Loop through all the models and put all the same values in one array
   // This allows that data to be normalized or standardized
-  const flattenedData: any[][] = [];
+  const flattenedData: any[][] = []; // TODO: Remove any;
   // Loop through models
   for (var x = 0; x < models.length; x++) {
     const m = models[x];
@@ -38,22 +50,47 @@ export const modelToTrainingData = <t>(models: t[] | null, values: Ops<t>[] | nu
     }
   }
 
+  // Loop through the new dataset and
+  flattenedData.forEach((data, i) => {
+    const value = values[i];
+    const temp = new TrainingModel(data, value);
+    console.log('Class', temp);
+    // source[value.key].values = values;
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const denormalize = (num: number) => num * (max - min) + min;
+    const normalize = (num: number) => (num - min) / (max - min);
+    const sourceOjb = {
+      data,
+      max,
+      min,
+      denormalize,
+      normalize,
+    };
+    source[value.key] = { ...source[value.key], ...sourceOjb };
+  });
+  console.warn('flattenedData', flattenedData);
   // Second Operation
   // Perform the normalization or standardization as required
   const mappedData = flattenedData.map((data, i) => mapData(data, values[i].op));
-
+  console.warn('mappedData', mappedData);
   // Third Operation
   // Reassemble the normalized/standardized data back into the original models array with all the values joined up
-  const finalOutput: number[][] = [];
+  const trainingData = [];
   for (var x = 0; x < models.length; x++) {
     const modelNew: number[] = [];
     for (var y = 0; y < values.length; y++) {
       modelNew.push(mappedData[y][x]);
     }
-    finalOutput.push(modelNew);
-  }
 
-  return finalOutput;
+    // Format the model used for brain.js. Add in the output model
+    trainingData.push({
+      input: modelNew,
+      output: [models[x][output.key]],
+    });
+  }
+  console.warn('source, trainingData', { source, trainingData });
+  return { source, trainingData };
 };
 
 /**
@@ -88,4 +125,17 @@ export const mapData = (data: number[], method: 'n' | 's' | null | undefined) =>
         return num;
     }
   });
+};
+
+/**
+ *
+ * @param numbers
+ * @param i
+ * @returns
+ */
+export const normalize = (numbers: number[], i?: number): number | number[] => {
+  const max = Math.max(...numbers);
+  const min = Math.min(...numbers);
+
+  return typeof i === 'number' ? (numbers[i] - min) / (max - min) : numbers.map(num => (num - min) / (max - min));
 };

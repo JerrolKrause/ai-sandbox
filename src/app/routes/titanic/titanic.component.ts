@@ -68,6 +68,7 @@ export class TitanicComponent implements OnInit, OnDestroy {
   private localStorageKey = 'titanic';
 
   constructor(private fb: FormBuilder, private svc: TitanicService) {
+    let passengersSrc: Passenger[] = [];
     this.passengerForm.reset();
     this.passengerForm.valueChanges.pipe(takeUntilDestroyed(), debounceTime(10)).subscribe(passenger => this.formChange(passenger));
 
@@ -78,19 +79,29 @@ export class TitanicComponent implements OnInit, OnDestroy {
         filter(x => !!x),
         // map(passengers => this.normalizePassengers(passengers)),
         map(passengers => {
-          passengers = passengers?.filter((_x, i) => i < 10) || [];
+          passengers = passengers?.filter((_x, i) => i < 20) || [];
+          passengersSrc = passengers;
+          passengers = passengers.map(p => ({ ...p, Age: typeof p.Age === 'string' ? 0 : p.Age }));
           // console.log(passengers);
-          console.time('Remap Time');
-          console.log(
-            modelToTrainingData(passengers, [
+          const temp = modelToTrainingData(
+            passengers,
+            [
               { key: 'Sex', value: p => (p.Sex === 'male' ? 1 : 0) },
               { key: 'Age', op: 'n' },
-              { key: 'SibSp', op: 'n' },
-            ]),
+              // { key: 'SibSp', op: 'n' },
+            ],
+            { key: 'Survived' },
           );
-          console.timeEnd('Remap Time');
+          console.log(temp);
           /**
-          // console.log('Passengers', passengers);
+          console.log(
+            'Survived:',
+            passengers.map(p => p.Survived),
+          ); */
+          console.log(
+            'Ages',
+            passengers?.map(p => [p.Age, p.Survived]),
+          );
           const men = passengers?.filter(x => x.Sex === 'male');
           console.log(
             'Male',
@@ -103,13 +114,8 @@ export class TitanicComponent implements OnInit, OnDestroy {
             women?.filter(x => x.Survived).length + '/' + women.length,
             Math.floor((women?.filter(x => x.Survived).length / women.length) * 100) + '%',
           );
-           */
-          return passengers?.map(passenger => {
-            return {
-              input: [passenger.Sex === 'male' ? 1 : 0],
-              output: [passenger.Survived],
-            };
-          });
+          console.log('Training Data', temp);
+          return temp.trainingData;
         }),
 
         mergeMap(dataset => this.svc.trainNeuralNet$(dataset, this.localStorageKey)),
@@ -120,6 +126,11 @@ export class TitanicComponent implements OnInit, OnDestroy {
         // console.time('Loading model took: ');
         this.net = new brain.NeuralNetworkGPU();
         this.net.fromJSON(message.data);
+
+        const ageRange = [0, 10, 20, 30, 40, 50];
+        ageRange.forEach(a => {
+          console.log('Age: ', a, this.net.run([a])[0]);
+        });
         // console.log('Model: ', message.data);
         this.stateChange({ loading: false, timeToTrain: message.timeStamp });
         // console.timeEnd('Loading model took: ');
@@ -161,9 +172,11 @@ export class TitanicComponent implements OnInit, OnDestroy {
    */
   private formChange(passenger: Nillable<PassengerNormalized>) {
     const data = removeNils({ ...passenger });
+    const value = [data.Sex ?? null, data.SibSp ?? null];
 
     try {
-      const result = this.net.run([data.Sex]);
+      console.log(value);
+      const result = this.net.run(value);
       this.stateChange({ survivalOdds: Math.floor(result[0] * 100) });
     } catch (err) {
       console.error(err);

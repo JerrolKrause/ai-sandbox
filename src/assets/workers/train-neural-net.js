@@ -15,8 +15,8 @@ self.onmessage = function (trainingData) {
   // Hidden layers determine the # of neurons between the input and output
   const net = new brain.NeuralNetworkGPU({ hiddenLayers: [3] });
   const options = {
-    log: error => console.log(error),
-    logPeriod: 100,
+    // log: error => console.log(error),
+    // logPeriod: 100,
     // learningRate: 0.005 // Only learn down to this decimal amount
     // errorThresh: 0.02 // Turn down error threshold to speed up training time
   };

@@ -70,7 +70,7 @@ export class TitanicService {
         timeStamp: 0,
       }).pipe(take(1));
     }
-    console.warn('Starting Training...', trainingData);
+    // console.warn('Starting Training...', trainingData);
     // If NOT using a webworker, do computation in main thread instead
     if (!useWorker) {
       console.time('Training took: ');
