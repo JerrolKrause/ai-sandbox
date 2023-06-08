@@ -85,7 +85,7 @@ export class TitanicComponent implements OnInit, OnDestroy {
             passengers,
             [
               { key: 'Sex', value: p => (p.Sex === 'male' ? 1 : 0) },
-              { key: 'Age', op: 'n' },
+              // { key: 'Age', op: 'n' },
               // { key: 'SibSp', op: 'n' },
             ],
             { key: 'Survived' },
@@ -93,7 +93,7 @@ export class TitanicComponent implements OnInit, OnDestroy {
         }),
         map(dataset => ({
           dataset,
-          model: this.svc.trainNeuralNet(dataset?.trainingData, this.localStorageKey),
+          model: this.svc.trainNeuralNet(dataset?.temp, this.localStorageKey),
         })),
       )
       .subscribe(neuralNet => {
@@ -110,7 +110,7 @@ export class TitanicComponent implements OnInit, OnDestroy {
           localStorage.removeItem(this.localStorageKey);
         }
 
-        console.log('Ages', neuralNet.dataset?.source.Age.values);
+        console.log('Ages', neuralNet.dataset?.source?.Age?.values);
         console.log('Survived', neuralNet.dataset?.outputs);
 
         /** */
@@ -124,11 +124,11 @@ export class TitanicComponent implements OnInit, OnDestroy {
         );
 
         try {
-          console.log('Men', this.net.run([1, null])[0]);
-          console.log('Women', this.net.run([0, null])[0]);
-          console.log('Women 0', this.net.run([0, neuralNet.dataset?.source.Age.normalize(0)])[0]);
-          console.log('Women 23', this.net.run([0, neuralNet.dataset?.source.Age.normalize(33)])[0]);
-          console.log('Women 38', this.net.run([0, neuralNet.dataset?.source.Age.normalize(38)])[0]);
+          console.log('Men', this.net.run({ Sex: 1 }));
+          console.log('Women', this.net.run({ Sex: 0 }));
+          // console.log('Women 0', this.net.run([0, neuralNet.dataset?.source.Age.normalize(0)])[0]);
+          // console.log('Women 23', this.net.run([0, neuralNet.dataset?.source.Age.normalize(33)])[0]);
+          // console.log('Women 38', this.net.run([0, neuralNet.dataset?.source.Age.normalize(38)])[0]);
         } catch (err) {
           console.error('Error with training data.', err);
         }

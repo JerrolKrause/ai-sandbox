@@ -70,5 +70,6 @@ export module AutoNN {
     outputs: number[];
     source: Source<t>;
     srcModel: t[];
+    temp: any;
   }
 }

@@ -54,7 +54,14 @@ export const modelToTrainingData = <t>(
     output: [outputs[i]],
   }));
 
-  return { source, trainingData, outputs, srcModel: models };
+  const temp = models.map((_m, i) => ({
+    input: values.reduce((a, b) => {
+      return { ...a, [b.key]: source[b.key].data[i] };
+    }, {}),
+    output: { [output.key]: outputs[i] },
+  }));
+
+  return { source, trainingData, outputs, srcModel: models, temp };
 };
 
 /**
