@@ -79,14 +79,14 @@ export class TitanicComponent implements OnInit, OnDestroy {
         map(passengers => {
           passengers = this.svc
             .seededShuffle(passengers || [], 44)
-            .filter((_x, i) => i < 400)
+            .filter((_x, i) => i < 50)
             .map(p => ({ ...p, Age: typeof p.Age === 'string' ? 0 : p.Age }));
           return modelToTrainingData(
             passengers,
             [
               { key: 'Sex', value: p => (p.Sex === 'male' ? 1 : 0) },
-              { key: 'Age', op: 'n' },
-              // { key: 'SibSp', op: 'n' },
+              // { key: 'Age', op: 'n' },
+              { key: 'Pclass' },
             ],
             { key: 'Survived' },
           );
@@ -110,10 +110,9 @@ export class TitanicComponent implements OnInit, OnDestroy {
           localStorage.removeItem(this.localStorageKey);
         }
 
-        console.log('Ages', neuralNet.dataset?.source?.Age?.values);
-        console.log('Survived', neuralNet.dataset?.outputs);
-
-        /** */
+        /**
+         * Men/Women Stats
+         *  */
         const men = neuralNet.dataset?.srcModel?.filter(x => x.Sex === 'male') || [];
         console.log('Male', men?.filter(x => x.Survived).length + '/' + men.length, Math.floor((men?.filter(x => x.Survived).length / men.length) * 100) + '%');
         const women = neuralNet.dataset?.srcModel?.filter(x => x.Sex !== 'male') || [];
@@ -126,13 +125,37 @@ export class TitanicComponent implements OnInit, OnDestroy {
         try {
           console.log('Men', this.net.run({ Sex: 1 }));
           console.log('Women', this.net.run({ Sex: 0 }));
-          console.log('Age 0', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(0) }));
-          console.log('Age 10', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(10) }));
-          console.log('Age 20', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(20) }));
-          console.log('Age 30', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(30) }));
-          console.log('Age 40', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(40) }));
-          console.log('Age 50', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(50) }));
-          console.log('Age 60', this.net.run({ Age: neuralNet.dataset?.source.Age.normalize(60) }));
+          /**
+          console.log('Age 0', this.net.run({ Age: neuralNet.dataset?.source.Age?.normalize(0) }));
+          console.log('Age 10', this.net.run({ Age: neuralNet.dataset?.source.Age?.normalize(10) }));
+          console.log('Age 20', this.net.run({ Age: neuralNet.dataset?.source.Age?.normalize(20) }));
+          console.log('Age 30', this.net.run({ Age: neuralNet.dataset?.source.Age?.normalize(30) }));
+          console.log('Age 40', this.net.run({ Age: neuralNet.dataset?.source.Age?.normalize(40) }));
+          console.log('Age 50', this.net.run({ Age: neuralNet.dataset?.source.Age?.normalize(50) }));
+          console.log('Age 60', this.net.run({ Age: neuralNet.dataset?.source.Age?.normalize(60) }));
+ */
+
+          /**
+           * Passenger Class Stats
+           */
+          console.log('Passenger Class', neuralNet.dataset?.source?.Pclass?.values);
+          const p1 = neuralNet.dataset?.source?.Pclass?.values.filter(n => n === 1).map((_n, i) => neuralNet.dataset?.outputs[i]);
+          console.log('P1 Survivors', (p1 ?? [])?.filter(x => !!x)?.length / (p1 ?? [])?.length);
+          const p2 = neuralNet.dataset?.source?.Pclass?.values.filter(n => n === 2).map((_n, i) => neuralNet.dataset?.outputs[i]);
+          console.log('P2 Survivors', (p2 ?? [])?.filter(x => !!x)?.length / (p2 ?? [])?.length);
+          const p3 = neuralNet.dataset?.source?.Pclass?.values.filter(n => n === 3).map((_n, i) => neuralNet.dataset?.outputs[i]);
+          console.log('P3 Survivors', (p3 ?? [])?.filter(x => !!x)?.length / (p3 ?? [])?.length);
+          // console.log('Survived', neuralNet.dataset?.outputs);
+
+          console.log('Pclass 1', this.net.run({ Pclass: 1 }));
+          console.log('Pclass 2', this.net.run({ Pclass: 2 }));
+          console.log('Pclass 3', this.net.run({ Pclass: 3 }));
+
+          /**
+          console.log('Pclass 1', this.net.run({ Pclass: neuralNet.dataset?.source?.Pclass?.normalize(1) }));
+          console.log('Pclass 2', this.net.run({ Pclass: neuralNet.dataset?.source?.Pclass?.normalize(2) }));
+          console.log('Pclass 3', this.net.run({ Pclass: neuralNet.dataset?.source?.Pclass?.normalize(3) }));
+           */
         } catch (err) {
           console.error('Error with training data.', err);
         }

@@ -50,7 +50,7 @@ export const modelToTrainingData = <t>(
 
   // Convert models and flattened data into format needed by the neural net for training
   const trainingData = models.map((_m, i) => ({
-    input: values.map(v => source[v.key].data[i]),
+    input: values.map(v => source?.[v.key]?.data[i]),
     output: [outputs[i]],
   }));
 
@@ -61,7 +61,7 @@ export const modelToTrainingData = <t>(
 
   const temp = models.map((_m, i) => ({
     input: values.reduce((a, b) => {
-      return { ...a, [b.key]: roundToDecimalPlace(source[b.key].data[i], 2) };
+      return { ...a, [b.key]: roundToDecimalPlace(source?.[b.key]?.data[i] ?? 0, 2) };
     }, {}),
     output: { [output.key]: outputs[i] },
   }));

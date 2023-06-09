@@ -7,7 +7,10 @@ export const ROUTES: Routes = [
   {
     path: 'titanic',
     loadChildren: () => import('./routes/titanic/titanic.module').then(m => m.TitanicModule),
-    // canActivate: [AuthGuard],
+  },
+  {
+    path: 'tensor-flow',
+    loadChildren: () => import('./routes/tensor-flow/tensor-flow.module').then(m => m.TensorFlowModule),
   },
   // Routes without masterpage or that do not need to be authenticated need to go first
   {

@@ -37,6 +37,12 @@ export class NavComponent implements OnInit, OnDestroy {
       routerLinkActiveOptions: { exact: true },
     },
     {
+      label: 'Tensorflow',
+      icon: 'cogs',
+      routerLink: '/tensor-flow',
+      routerLinkActiveOptions: { exact: true },
+    },
+    {
       label: 'Users Demo',
       icon: 'users',
       routerLink: '/users',

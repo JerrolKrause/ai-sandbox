@@ -68,7 +68,7 @@ export class TitanicService {
     }
     console.log('Starting neural net training. This could take a while...');
     console.time('Training model took: ');
-    const net = new brain.NeuralNetworkGPU({ hiddenLayers: [3] });
+    const net = new brain.NeuralNetworkGPU({ activation: 'leaky-relu', hiddenLayers: [3] });
     const options = {
       log: (error: any) => console.log(error),
       logPeriod: 500,
