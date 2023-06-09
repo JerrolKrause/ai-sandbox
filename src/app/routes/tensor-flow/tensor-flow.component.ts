@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 // import * as tf from '@tensorflow/tfjs-node-gpu';
-import * as tf from '@tensorflow/tfjs';
+// import * as tf from '@tensorflow/tfjs';
+import { scriptLoad$ } from '@ntersol/utils';
+import { switchMap } from 'rxjs';
+
+declare var mobilenet: any;
 
 @Component({
   selector: 'app-tensor-flow',
@@ -9,13 +13,27 @@ import * as tf from '@tensorflow/tfjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TensorFlowComponent implements OnInit, OnDestroy {
-  name = 'tensorFlow';
-  constructor() {} // public uiState: UiStateService, // Global UI state // private domainState: DomainService, // Global domain state
-
+  constructor() {}
   ngOnInit() {
     // Single request
-    // scriptLoad$('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js').subscribe(() => {});
+    scriptLoad$(['https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.1'])
+      .pipe(switchMap(() => scriptLoad$(['https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.0.0'])))
+      .subscribe(() => {
+        console.log(mobilenet);
+        // Load the model.
+        mobilenet.load().then((model: any) => {
+          const img = document.getElementById('image');
 
+          /** */
+          // Classify the image.
+          model.classify(img).then((predictions: any) => {
+            console.log('Predictions: ');
+            console.log(predictions);
+          });
+        });
+      });
+
+    /**
     // Define a model for linear regression. The script tag makes `tf` available
     // as a global variable.
     const model = tf.sequential();
@@ -36,8 +54,7 @@ export class TensorFlowComponent implements OnInit, OnDestroy {
       (model.predict(tf.tensor2d([5], [1, 1])) as any).print();
       (model.predict(tf.tensor2d([10], [1, 1])) as any).print();
     });
-
-    // Script loaded successfully
+ */
   }
 
   ngOnDestroy() {}
